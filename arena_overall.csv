@@ -1,0 +1,174 @@
+name,cnt,frequency,allfrequency,diff
+Chillwind Yeti,3026,0.52,0.50,+0.02
+Harvest Golem,2976,0.51,0.49,+0.02
+Dark Iron Dwarf,2711,0.46,0.44,+0.02
+Sen'jin Shieldmasta,2511,0.43,0.42,+0.01
+Boulderfist Ogre,2397,0.41,0.41,+0.00
+Acidic Swamp Ooze,2392,0.41,0.43,-0.02
+Shattered Sun Cleric,2285,0.39,0.42,-0.03
+Scarlet Crusader,2281,0.39,0.39,+0.00
+Silver Hand Knight,2193,0.38,0.37,+0.01
+Mad Bomber,2149,0.37,0.33,+0.04
+Earthen Ring Farseer,1938,0.33,0.34,-0.01
+Faerie Dragon,1922,0.33,0.36,-0.03
+Argent Commander,1916,0.33,0.29,+0.04
+Azure Drake,1899,0.33,0.29,+0.04
+Stormwind Champion,1894,0.32,0.31,+0.01
+Amani Berserker,1807,0.31,0.30,+0.01
+Venture Co. Mercenary,1805,0.31,0.35,-0.04
+Loot Hoarder,1782,0.31,0.29,+0.02
+Spellbreaker,1737,0.30,0.33,-0.03
+Knife Juggler,1655,0.28,0.24,+0.04
+Cult Master,1640,0.28,0.33,-0.05
+Gnomish Inventor,1625,0.28,0.28,+0.00
+Sunwalker,1618,0.28,0.24,+0.04
+Raging Worgen,1571,0.27,0.30,-0.03
+Stranglethorn Tiger,1552,0.27,0.26,+0.01
+Stampeding Kodo,1482,0.25,0.22,+0.03
+Worgen Infiltrator,1426,0.24,0.25,-0.01
+Fen Creeper,1409,0.24,0.25,-0.01
+Defender of Argus,1377,0.24,0.23,+0.01
+Youthful Brewmaster,1325,0.23,0.28,-0.05
+Acolyte of Pain,1324,0.23,0.23,+0.00
+Frostwolf Warlord,1297,0.22,0.23,-0.01
+Bloodfen Raptor,1237,0.21,0.23,-0.02
+Spiteful Smith,1222,0.21,0.21,+0.00
+Frost Elemental,1167,0.20,0.20,+0.00
+Dire Wolf Alpha,1133,0.19,0.21,-0.02
+Twilight Drake,1111,0.19,0.19,+0.00
+Stormwind Knight,1098,0.19,0.18,+0.01
+Ancient Brewmaster,1021,0.17,0.23,-0.06
+Mind Control Tech,1013,0.17,0.17,+0.00
+Violet Teacher,1011,0.17,0.16,+0.01
+Jungle Panther,1008,0.17,0.21,-0.04
+Bloodsail Raider,1003,0.17,0.15,+0.02
+Flesheating Ghoul,969,0.17,0.20,-0.03
+Imp Master,962,0.16,0.17,-0.01
+Sea Giant,938,0.16,0.14,+0.02
+Ogre Magi,906,0.16,0.17,-0.01
+Darkscale Healer,870,0.15,0.15,+0.00
+Wolfrider,857,0.15,0.15,+0.00
+Razorfen Hunter,850,0.15,0.14,+0.01
+Ironfur Grizzly,804,0.14,0.15,-0.01
+Injured Blademaster,801,0.14,0.15,-0.01
+Stormpike Commando,800,0.14,0.14,+0.00
+Gurubashi Berserker,799,0.14,0.15,-0.01
+Bluegill Warrior,789,0.14,0.14,+0.00
+Wild Pyromancer,776,0.13,0.13,+0.00
+River Crocolisk,775,0.13,0.13,+0.00
+Argent Squire,705,0.12,0.11,+0.01
+Archmage,701,0.12,0.12,+0.00
+Emperor Cobra,678,0.12,0.13,-0.01
+Abusive Sergeant,653,0.11,0.11,+0.00
+Faceless Manipulator,637,0.11,0.12,-0.01
+Sunfury Protector,637,0.11,0.11,+0.00
+Gadgetzan Auctioneer,623,0.11,0.11,+0.00
+Haunted Creeper,591,0.10,0.09,+0.01
+Novice Engineer,558,0.10,0.10,+0.00
+Ironbeak Owl,551,0.09,0.13,-0.04
+Kobold Geomancer,540,0.09,0.10,-0.01
+Oasis Snapjaw,539,0.09,0.10,-0.01
+Blood Knight,531,0.09,0.10,-0.01
+Silvermoon Guardian,518,0.09,0.11,-0.02
+War Golem,514,0.09,0.10,-0.01
+Dragonling Mechanic,507,0.09,0.09,+0.00
+Spectral Knight,506,0.09,0.11,-0.02
+Reckless Rocketeer,466,0.08,0.10,-0.02
+Sludge Belcher,449,0.08,0.07,+0.01
+Lord of the Arena,438,0.08,0.09,-0.01
+Demolisher,438,0.08,0.10,-0.02
+Big Game Hunter,411,0.07,0.07,+0.00
+Questing Adventurer,404,0.07,0.08,-0.01
+Abomination,401,0.07,0.09,-0.02
+Zombie Chow,386,0.07,0.06,+0.01
+Leper Gnome,386,0.07,0.08,-0.01
+Ravenholdt Assassin,383,0.07,0.08,-0.01
+Ironforge Rifleman,374,0.06,0.07,-0.01
+Molten Giant,358,0.06,0.07,-0.01
+Crazed Alchemist,348,0.06,0.07,-0.01
+Elven Archer,342,0.06,0.06,+0.00
+Murloc Tidehunter,341,0.06,0.05,+0.01
+Pint-Sized Summoner,300,0.05,0.06,-0.01
+Arcane Golem,287,0.05,0.05,+0.00
+Booty Bay Bodyguard,258,0.04,0.06,-0.02
+Master Swordsmith,247,0.04,0.05,-0.01
+Ragnaros the Firelord,239,0.04,0.03,+0.01
+Priestess of Elune,210,0.04,0.05,-0.01
+Unstable Ghoul,204,0.03,0.05,-0.02
+Dread Corsair,203,0.03,0.04,-0.01
+Raid Leader,197,0.03,0.05,-0.02
+Nightblade,195,0.03,0.04,-0.01
+Young Priestess,195,0.03,0.04,-0.01
+Tauren Warrior,185,0.03,0.05,-0.02
+Windfury Harpy,179,0.03,0.04,-0.01
+Mad Scientist,179,0.03,0.02,+0.01
+Mogu'shan Warden,176,0.03,0.04,-0.01
+Cairne Bloodhoof,165,0.03,0.02,+0.01
+Deathlord,159,0.03,0.03,+0.00
+Frostwolf Grunt,156,0.03,0.03,+0.00
+Ysera,151,0.03,0.02,+0.01
+Southsea Deckhand,151,0.03,0.02,+0.01
+Ancient Mage,141,0.02,0.03,-0.01
+Voodoo Doctor,134,0.02,0.02,+0.00
+Sylvanas Windrunner,131,0.02,0.02,+0.00
+Dalaran Mage,123,0.02,0.03,-0.01
+Onyxia,123,0.02,0.01,+0.01
+Thrallmar Farseer,121,0.02,0.03,-0.01
+The Black Knight,119,0.02,0.02,+0.00
+Mana Wraith,118,0.02,0.02,+0.00
+Nerubian Egg,100,0.02,0.02,+0.00
+Deathwing,95,0.02,0.01,+0.01
+Southsea Captain,91,0.02,0.02,+0.00
+Silverback Patriarch,87,0.01,0.02,-0.01
+Core Hound,86,0.01,0.02,-0.01
+Murloc Warleader,83,0.01,0.01,+0.00
+Nerub'ar Weblord,82,0.01,0.02,-0.01
+Shade of Naxxramas,81,0.01,0.02,-0.01
+Bloodsail Corsair,74,0.01,0.02,-0.01
+Hogger,72,0.01,0.01,+0.00
+Undertaker,59,0.01,0.02,-0.01
+Stonetusk Boar,58,0.01,0.01,+0.00
+Shieldbearer,58,0.01,0.02,-0.01
+Lightwarden,57,0.01,0.01,+0.00
+Mana Addict,55,0.01,0.01,+0.00
+Mountain Giant,53,0.01,0.01,+0.00
+Echoing Ooze,53,0.01,0.01,+0.00
+Illidan Stormrage,52,0.01,0.01,+0.00
+Leeroy Jenkins,49,0.01,0.01,+0.00
+Dancing Swords,48,0.01,0.02,-0.01
+Wailing Soul,46,0.01,0.01,+0.00
+Gruul,45,0.01,0.01,+0.00
+Baron Geddon,44,0.01,0.01,+0.00
+Alexstrasza,37,0.01,0.01,+0.00
+Coldlight Oracle,35,0.01,0.01,+0.00
+Secretkeeper,34,0.01,0.01,+0.00
+Ancient Watcher,34,0.01,0.01,+0.00
+Goldshire Footman,34,0.01,0.01,+0.00
+Murloc Raider,30,0.01,0.01,+0.00
+Murloc Tidecaller,27,0.00,0.00,+0.00
+Harrison Jones,26,0.00,0.01,-0.01
+Stoneskin Gargoyle,25,0.00,0.01,-0.01
+Bloodmage Thalnos,23,0.00,0.00,+0.00
+Doomsayer,21,0.00,0.01,-0.01
+Captain Greenskin,18,0.00,0.00,+0.00
+Kel'Thuzad,18,0.00,0.00,+0.00
+Nat Pagle,17,0.00,0.00,+0.00
+Malygos,17,0.00,0.00,+0.00
+King Mukla,17,0.00,0.00,+0.00
+Alarm-o-Bot,16,0.00,0.01,-0.01
+Coldlight Seer,15,0.00,0.00,+0.00
+The Beast,15,0.00,0.00,+0.00
+Young Dragonhawk,11,0.00,0.00,+0.00
+Loatheb,10,0.00,0.00,+0.00
+Hungry Crab,9,0.00,0.00,+0.00
+Maexxna,9,0.00,0.00,+0.00
+Feugen,9,0.00,0.00,+0.00
+Tinkmaster Overspark,7,0.00,0.00,+0.00
+Millhouse Manastorm,6,0.00,0.00,+0.00
+Magma Rager,6,0.00,0.00,+0.00
+Angry Chicken,6,0.00,0.00,+0.00
+Wisp,5,0.00,0.00,+0.00
+Grimscale Oracle,5,0.00,0.00,+0.00
+Nozdormu,4,0.00,0.00,+0.00
+Stalagg,2,0.00,0.00,+0.00
+Baron Rivendare,1,0.00,0.00,+0.00

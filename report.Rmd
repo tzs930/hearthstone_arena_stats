@@ -1,0 +1,388 @@
+---
+title: "Hearthstone Arena Card Recommendation Model"
+author: "Seokin Seo"
+date: '`r format(Sys.time(), ''%B %d, %Y'')`'
+output: html_document
+---
+# Introduction
+## Hearthstone과 Arena
+[하스스톤][1]은 Blizzard Entertainment에서 개발한 온라인 기반 트레이딩 카드 게임이다. 그 중에서 투기장(Arena)이란 시스템이 제공되는데, 투기장은 플레이어가 가지고 있는 덱을 사용하는 것이 아니라, 랜덤하게 제시되는 3장의 카드 중 1장의 카드를 골라서 총 30장의 덱을 구성하여 진행하는 방식을 말한다. 
+[1]: http://www.battle.net/hearthstone
+## Goal
+투기장에서 플레이어는 어떤 카드를 가지고 플레이할지 예상하기 어려우므로, 그때 그때 제시되는 카드를 보다 잘 선택(Pick)할 필요성이 있고, 이러한 선택을 통계와 데이터 사이언스에 기반하여 추천하는 것이 이 프로젝트의 목적이다.
+
+---
+
+# Dataset Description
+
+## Used Libraries
+
+```{r}
+library(ggplot2)
+library(dplyr)
+library(ROCR)
+library(stringr)
+library(glmnet)
+library(randomForest)
+library(gbm)
+library(editR)
+```
+
+## cardinfo
+투기장에서 사용되는 카드들의 정보들을 담고 있는 데이터셋으로 `cardinfo_collect.csv`로부터 필요한 변수들들을 선택하여 `cardinfo` 데이터프레임으로 삽입한다.
+
+```{r}
+cardinfo_collect <- read.csv("cardinfo_collect.csv", header = TRUE, na.string="")
+cardinfo <- cardinfo_collect %>% select(name,type,rarity,playerClass,cost,attack,health,race,text,spellDamage,overload)
+cardinfo <- cardinfo
+```
+
+```{r}
+head(cardinfo)
+```
+<div style="text-align: center; margin-top: 40px; margin-bottom: 40px;">
+<img src="cards.png" style="width: 500px; margin: auto;" >
+</div>
+
+**Variables**
+
+* name : 카드의 이름
+* type : 카드의 종류. 크게 **하수인**과 **주문**으로 나뉜다.
+* rarity : 카드의 희귀도. **전설, 영웅, 희귀, 일반**으로 나뉜다.
+* playerClass : 직업에 따라 사용할수 있는 카드가 다른 경우 어떤 직업인지 나타낸다. 
+* cost : 카드의 비용. 좌측 상단에 있는 숫자를 나타낸다.
+* attack : 하수인의 공격력
+* health : 하수인의 체력
+* race : 하수인의 종족. 없는 경우가 더많다.
+* text : 카드의 텍스트
+* spellDamage : 주문공격력
+* overload : 과부하
+
+<br><br>
+
+## arenainfo
+투기장에서 플레이한 플레이어들의 정보들을 담고 있는 데이터셋으로, 그중에서도 10승 이상을 거둔 플레이어들의 정보를 담고 있는 데이터셋으로 그 범위를 축소시켰다. 전체 데이터의 메타데이터를 담고 있는 `arena_info.csv` 파일과 각각의 직업별로 어떤 카드들을 선택했는지에 관한 데이터를 담고 있는 `arena_druid.csv`, `arena_hunter.csv`, `arena_mage.csv` 등의 파일이 있다.
+
+```{r}
+arenainfo <- read.csv( "arena_info.csv",    header= TRUE )
+druid     <- read.csv( "arena_druid.csv",   header= TRUE )
+hunter    <- read.csv( "arena_hunter.csv",  header= TRUE )
+mage      <- read.csv( "arena_mage.csv",    header= TRUE )
+paladin   <- read.csv( "arena_paladin.csv", header= TRUE )
+priest    <- read.csv( "arena_priest.csv",  header= TRUE )
+rogue     <- read.csv( "arena_rogue.csv",   header= TRUE )
+shaman    <- read.csv( "arena_shaman.csv",  header= TRUE )
+warlock   <- read.csv( "arena_warlock.csv", header= TRUE )
+warrior   <- read.csv( "arena_warrior.csv", header= TRUE )
+```
+```{r}
+head(arenainfo)
+head(druid)
+```
+
+# Data Preprocessing
+카드를 추천하기 위해서는 해당 카드가 어떤 기능이 있고, 어떤 장단점이 있는지 파악하는 것이 중요한데, 이를 파악하기 위해 카드의 텍스트를 살펴볼 필요가 있다. 우선 텍스트에서 각각의 조건에 맞는 attribute를 추출하기 위해서 `text` attribute가 NA인 경우 null string ("")으로 교체한다.
+
+```{r}
+levels(cardinfo$text) <- append(levels(cardinfo$text), "")
+for(idx in which(is.na(cardinfo$text)))
+  cardinfo[idx,"text"] <- ""
+```
+
+위 작업을 거친 후, 각각의 attribute들을 `text` attribute로부터 추출하고 `mutate` 함수를 이용하여 `cardinfo` 데이터프레임에 삽입한다.
+```{r}
+# Card Information Pre-processing
+cardinfo <- cardinfo %>% filter( type!="HERO" ) %>%
+  mutate( hasTaunt        = as.numeric( str_detect( text,"Taunt") ) ) %>%
+  mutate( hasCharge       = as.numeric( str_detect( text,"Charge") ) ) %>%
+  mutate( hasDeathrattle  = as.numeric( str_detect( text,"Deathrattle") ) ) %>%
+  mutate( hasBattlecry    = as.numeric( str_detect( text,"Battlecry") ) ) %>%
+  mutate( hasDivineShield = as.numeric( str_detect( text,"Divine Shield") ) ) %>%
+  mutate( hasStealth      = as.numeric( str_detect( text,"Stealth") ) ) %>%
+  mutate( hasWindfury     = as.numeric( str_detect( text,"Windfury") ) )%>%
+  mutate( isSecret        = as.numeric( ( type=="SPELL" & str_detect(text,"Secret") ) ) )%>%
+  mutate( hasCombo        = as.numeric( str_detect( text,"Combo") ) ) %>%
+  mutate( hasDestroy      = as.numeric( str_detect( text,"Destroy") ) ) %>%
+  mutate( hasInspire      = as.numeric( str_detect( text,"Inspire") ) ) %>%
+  mutate( hasFreeze       = as.numeric( str_detect( text,"Freeze") ) ) %>%
+  mutate( hasDraw         = as.numeric( str_detect( text,"Draw") ) ) %>%
+  mutate( hasDiscard      = as.numeric( str_detect( text,"Discard") ) ) %>%
+  mutate( hasChoose       = as.numeric( str_detect( text,"Choose One") ) ) %>%
+  mutate( relSummon       = as.numeric( str_detect( text,"Summon ") ) ) %>%
+  mutate( affectToAll     = as.numeric( str_detect( text,"to all ") ) ) %>%
+  mutate( restoreAmount   = ifelse( str_detect( text,"Restore" ), as.integer(str_extract(text, "[0-9]+")) , 0 ) ) %>%
+  mutate( dealAmount      = ifelse( str_detect( text,"Deal" ),    as.integer(str_extract(text, "[0-9]+")) , 0 ) ) %>%
+  transform( name = as.character(name) ) %>% select(-text) %>% arrange( as.character(name) )
+```
+추후에 모델링을 위해 boolean 자료형이 아니라 numeric으로 타입캐스팅했다. 위 과정을 거친 후에도 남아있는 NA값들의 값들을 지정해준다. 
+
+```{r}
+# NA Processing
+levels(cardinfo$playerClass) <- append(levels(cardinfo$playerClass), "COMMON")
+for(idx in which(is.na(cardinfo$playerClass)))
+  cardinfo[idx,"playerClass"] <- "COMMON"
+
+levels(cardinfo$race) <- append(levels(cardinfo$race), "NORMAL")
+for(idx in which(is.na(cardinfo$race)))
+  cardinfo[idx,"race"] <- "NORMAL"
+
+cardinfo[is.na(cardinfo)] <- 0
+```
+또한 투기장 데이터들도 preprocessing한다.
+```{r}
+overall <- data.frame( name=character(), cnt=integer(), freqeuncy=numeric(), 
+                       allfrequency=numeric(), diff=numeric(), className=character() )
+
+druid   <- druid %>% mutate(className = "Druid") %>% arrange(desc(frequency))
+hunter  <- hunter %>% mutate(className = "Hunter") %>% arrange(desc(frequency))
+mage    <- mage %>% mutate(className = "Mage") %>% arrange(desc(frequency))
+paladin <- paladin %>% mutate(className = "Paladin") %>% arrange(desc(frequency))
+priest  <- priest %>% mutate(className = "Priest") %>% arrange(desc(frequency))
+rogue   <- rogue %>% mutate(className = "Rogue") %>% arrange(desc(frequency))
+shaman  <- shaman %>% mutate(className = "Shaman") %>% arrange(desc(frequency))
+warlock <- warlock %>% mutate(className = "Warlock") %>% arrange(desc(frequency))
+warrior <- warrior %>% mutate(className = "Warrior") %>% arrange(desc(frequency))
+
+classlist = list(druid,hunter,mage,paladin,priest,rogue,shaman,warlock,warrior)
+```
+
+## 자료시각화
+### 직업별 빈도수 Top 15
+
+```{r echo=FALSE}
+for( cl in classlist ){
+  #cl <- cl %>% mutate(className = deparse(substitute(cl)) )
+  overall <- rbind(overall, cl)
+}
+
+overall <- overall %>% group_by(name) %>% summarise(sumcount = sum(cnt) ) %>%
+  arrange(as.character(name) )
+
+
+# Plot Overall Top 15
+overall_top10 <- data.frame( name=character(), cnt=integer(), freqeuncy=numeric(), 
+                             allfrequency=numeric(), diff=numeric(), className=character() )
+
+classlist_top10 <- list(druid %>% head(15),hunter %>% head(15),mage %>% head(15),paladin %>% head(15),
+                        priest %>% head(15),rogue %>% head(15),shaman %>% head(15), warlock %>% head(15),
+                        warrior %>% head(15))
+
+for( cl in classlist_top10 ){
+  overall_top10 <- rbind(overall_top10, cl)
+}
+
+overall_top10 %>% group_by(className) %>% 
+  ggplot(aes(x=reorder(name,frequency),y=frequency, fill=className)) + 
+  geom_bar(position="dodge", stat="identity") + coord_flip() + ggtitle("Most Top 15 Pick Frequency Group by Class")
+```
+
+## 투기장 전체 Top 50
+```{r echo=FALSE}
+# Plot Top 50 Pick on the Arena
+result_top50 <- left_join(cardinfo, overall)
+result_top50 %>% arrange(desc(sumcount)) %>% head(50) %>% 
+  ggplot(aes(x=reorder(name,sumcount),sumcount)) + geom_bar(stat="identity") + coord_flip() +
+  ggtitle("Most Top 50 Pick on the Arena")
+```
+
+# Data Modeling
+각각 직업마다 데이터 모델링을 해야 하지만, 이번 프로젝트에서는 우선 마법사 직업의 데이터셋만 다루기로 한다. 따라서 `result_mage` 데이터셋을 `playerClass`가 `'MAGE'`또는 `'COMMON'`인 카드들로만 필터링한다.
+```{r}
+# Make Model for Mage Class
+result_mage <- left_join(cardinfo, mage[1:4])
+result_mage[is.na(result_mage)] <- 0
+result_mage <- result_mage %>% filter( playerClass=='MAGE' | playerClass=='COMMON' )
+```
+
+## Frequency Normalization
+투기장에서 일반 등급의 카드가 등장할 확률과 전설 등급의 카드가 등장할 확률은 같지 않으므로 이를 일반화해서 모델링 하여야 한다. 예를 들어, 나쁘지 않지만 자주 등장하기 때문에 자주 고르는 일반 카드가 있고, 자주 등장하지는 않지만 나오면 무조건 고르는 것이 승률에 영향을 주는 전설 카드의 경우 후자의 카드가 더 중요하다고 볼 수 있으므로 이를 일반화 시켜주어야 한다. 
+
+```{r}
+# Rarity Normalize
+leg  <- as.integer(sum( result_mage %>% filter(rarity=='LEGENDARY') %>% select(cnt) ))
+epic <- as.integer(sum( result_mage %>% filter(rarity=='EPIC') %>% select(cnt) ))
+rare <- as.integer(sum( result_mage %>% filter(rarity=='RARE') %>% select(cnt) ))
+com  <- as.integer(sum( result_mage %>% filter(rarity=='COMMON' | rarity=='FREE') %>% select(cnt) ))
+
+sumr <- as.integer( sum(c(leg,epic,rare,com)) )
+legr <- leg/sumr
+epicr <- epic/sumr
+rarer <- rare/sumr
+comr <- com/sumr
+
+result_mage <- result_mage %>% 
+  mutate( normfreq = frequency / ifelse( rarity=='LEGENDARY', legr,
+                                  ifelse( rarity=='EPIC', epicr, 
+                                    ifelse( rarity=='RARE', rarer, comr) ) ) )
+```
+
+## Setting Target Attribute
+어떤 변수를 대응변수로 설정할지 정한다. 앞서 normalize한 결과를 토대로, 그 결과가 평균결과보다 높은지 분류분석하기로 하자. 해당 대응변수를 `freqover`라고 명명했다.
+```{r}
+# Set target attribute (freqover)
+freqthres <- as.numeric(result_mage %>% summarize(mean(normfreq)))
+result_mage <- result_mage %>% 
+  mutate( freqover = ifelse(normfreq >= freqthres, "Y", "N") )
+result_mage$freqover <- as.factor(result_mage$freqover)
+```
+
+## Data Sampling
+위에서 생성된 데이터를 6:2:2 비율로 각각 `train_set`, `validate_set`, `test_set`으로 샘플링한다.
+```{r}
+# Sampling Set
+set.seed(1601)
+n <- nrow(result_mage)
+
+idx <- 1:n
+training_idx <- sample(idx, n * .60)
+idx <- setdiff(idx, training_idx)
+validate_idx = sample(idx, n * .20)
+test_idx <- setdiff(idx, validate_idx)
+
+length(training_idx)
+length(validate_idx)
+length(test_idx)
+
+train_set    <- result_mage[training_idx,]
+validate_set <- result_mage[validate_idx,]
+test_set     <- result_mage[test_idx,]
+```
+
+## Visualization
+위 결과를 간단히 시각화한 결과는 다음과 같다.
+```{r}
+levels(train_set$name) <- levels(result_mage$name)
+levels(validate_set$name) <- levels(result_mage$name)
+levels(test_set$name) <- levels(result_mage$name)
+
+train_set %>%
+  ggplot(aes(health, fill=freqover)) + geom_density(alpha=.5)
+
+train_set %>%
+  ggplot(aes(cost, fill=freqover)) + geom_density(alpha=.5)
+```
+
+# Classification Modeling
+## Generalized Linear Model
+
+```{r}
+# Generalized Linear Model
+glm_full = glm(freqover ~ +rarity +type +race +health +attack +cost +dealAmount +restoreAmount  
+               +spellDamage +overload +hasTaunt +hasCharge +hasBattlecry +hasDivineShield
+               +hasDeathrattle +hasStealth +hasWindfury +isSecret +hasCombo +hasDestroy +hasInspire
+               +hasFreeze +hasDraw +hasDiscard +hasChoose +relSummon +affectToAll, data=train_set, family=binomial)
+summary(train_set)
+
+y_obs = ifelse(validate_set$normfreq >= freqthres, "Y", "N")
+y_obs <- as.factor(y_obs)
+yhat_lm = predict(glm_full, newdata=validate_set, type='response')
+
+pred_lm = prediction(yhat_lm, y_obs)
+perf_lm = performance(pred_lm, measure = "tpr", x.measure = "fpr")
+plot(perf_lm, col='black', main="ROC Curve for GLM")
+abline(0,1)
+
+```
+
+## Glmnet
+
+```{r}
+# Glmnet
+xx = model.matrix(freqover ~ +rarity +type +race +health +attack +cost +dealAmount +restoreAmount  
+                  +spellDamage +overload +hasTaunt +hasCharge +hasBattlecry +hasDivineShield
+                  +hasDeathrattle +hasStealth +hasWindfury +isSecret +hasCombo +hasDestroy +hasInspire
+                  +hasFreeze +hasDraw +hasDiscard +hasChoose +relSummon +affectToAll -1, result_mage)
+x = xx[training_idx, ]
+y = ifelse(train_set$freqover  == "Y", 1, 0)
+dim(x)
+
+hs_glmnet_fit = glmnet(x, y)
+plot(hs_glmnet_fit)
+
+hs_cvfit = cv.glmnet(x, y, family = "binomial")
+plot(hs_cvfit)
+log(hs_cvfit$lambda.min)
+
+coef(hs_cvfit, s=hs_cvfit$lambda.min)
+length(which(coef(hs_cvfit, s="lambda.min")>0))
+
+y_obs = ifelse(validate_set$freqover == "Y", 1, 0)
+yhat_glmnet = predict(hs_cvfit, s = "lambda.min", newx=xx[validate_idx,], type='response')
+# yhat_glmnet = predict(ad_cvfit, s = "lambda.min", newx=xx[validate_idx,], type='response')
+yhat_glmnet = yhat_glmnet[,1] # change to a vectro from [n*1] matrix
+
+pred_glmnet = prediction(yhat_glmnet, y_obs)
+perf_glmnet = performance(pred_glmnet, measure = "tpr", x.measure = "fpr")
+plot(perf_glmnet, col='blue')
+abline(0,1)
+
+```
+
+## Random Forest
+
+```{r}
+# Random Forest
+set.seed(1607)
+ad_rf = randomForest(freqover ~ +rarity +type +race +health +attack +cost +dealAmount +restoreAmount  
+                     +spellDamage +overload +hasTaunt +hasCharge +hasBattlecry +hasDivineShield
+                     +hasDeathrattle +hasStealth +hasWindfury +isSecret +hasCombo +hasDestroy +hasInspire
+                     +hasFreeze +hasDraw +hasDiscard +hasChoose +relSummon +affectToAll, train_set)
+ad_rf
+ plot(ad_rf)
+
+varImpPlot(ad_rf, main="Variable Importance")
+test_set[1:5,"name"]
+predict(ad_rf, newdata = test_set[1:5,],type="prob")
+
+yhat_rf = predict(ad_rf, newdata = validate_set, type='prob')[,'Y']
+pred_rf = prediction(yhat_rf, y_obs)
+perf_rf = performance(pred_rf, measure = "tpr", x.measure = "fpr")
+plot(perf_rf, col='red')
+abline(0,1)
+
+```
+
+## GBM Boosting
+
+```{r}
+# GBM Boosting
+set.seed(1607)
+result_gbm = train_set %>% mutate(freqover=ifelse(freqover == "Y", 1, 0))
+  
+re_gbm = gbm(freqover ~ +rarity +type +race +health +attack +cost +dealAmount +restoreAmount  
+             +spellDamage +overload +hasTaunt +hasCharge +hasBattlecry +hasDivineShield
+             +hasDeathrattle +hasStealth +hasWindfury +isSecret +hasCombo +hasDestroy +hasInspire
+             +hasFreeze +hasDraw +hasDiscard +hasChoose +relSummon +affectToAll, data=result_gbm,
+             distribution = "bernoulli",
+             n.trees=50000, cv.folds=3, verbose = TRUE)
+             
+best_iter = gbm.perf(re_gbm, method="cv")
+re_gbm2 = gbm.more(re_gbm, n.new.trees = 10000)
+best_iter = gbm.perf(re_gbm2, method="cv")
+
+yhat_gbm = predict(re_gbm, n.trees=best_iter, newdata=validate_set, type='response')
+pred_gbm = prediction(yhat_gbm, y_obs)
+perf_gbm = performance(pred_gbm, measure = "tpr", x.measure = "fpr")
+```
+
+## Performance Report
+
+```{r}
+plot(perf_lm, col='black', main="ROC Curve")
+plot(perf_glmnet, add=TRUE, col='blue')
+plot(perf_rf, add=TRUE, col='red')
+plot(perf_gbm, add=TRUE, col='cyan')
+abline(0,1)
+
+legend('bottomright', inset=.1,
+         legend = c("GLM", "glmnet", "RF", "GBM"),
+         col=c('black', 'blue', 'red', 'cyan'), lty=1, lwd=2)
+         
+performance(pred_lm, "auc")@y.values[[1]]
+performance(pred_glmnet, "auc")@y.values[[1]]
+performance(pred_rf, "auc")@y.values[[1]]
+performance(pred_gbm, "auc")@y.values[[1]]
+
+# Predict by GBM Model
+predict(re_gbm, n.trees=best_iter, newdata=result_gbm %>% filter(name=='Fireball'), type='response')
+``` 
